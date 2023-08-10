@@ -1,8 +1,9 @@
 import tkinter as tk
 import random
+import time
 
 
-class minesweeper():
+class Minesweeper():
     def __init__(self):
         # Initialize the tkinter GUI
         self.master = tk.Tk()
@@ -39,9 +40,11 @@ class minesweeper():
             self.firstClick = False
             self.first_click(index)
             
-        if self.minePlacement[index] & (event == 0):
+        if self.minePlacement[index]:
             # Revealed a mine
             print("You Lose")
+            self.display_mines()
+            time.sleep(5)
             quit()
 
         if self.revealed[index]:
@@ -67,7 +70,6 @@ class minesweeper():
             self.complete_check()
             return
         
-        
     def right_click(self, event, x):
         # Place flag
         if not self.revealed[x]:
@@ -86,19 +88,22 @@ class minesweeper():
             self.flag[index] = False
     
     def create_board(self):
+        self.stopwatchFrame = tk.Frame(self.master)
+        self.stopwatchFrame.grid(row=0, column=0, columnspan=10)
+        self.stopwatch = StopwatchApp(self.stopwatchFrame)
         for i in range(self.rows):
             for j in range(self.cols):
                 index = str(j) + str(i)
                 
                 self.frames[index] = tk.Frame(self.master, width=30, height=30, borderwidth=5, relief="raised")
                 self.frames[index].grid_propagate(False)
-                self.frames[index].grid(row=i, column=j)
+                self.frames[index].grid(row=i+1, column=j)
                 self.frames[index].bind("<Button-1>", lambda event, x=index: self.reveal_square(event, x))
                 self.frames[index].bind("<Button-2>", lambda event, x=index: self.right_click(event, x))
                 self.frames[index].bind("<Button-3>", lambda event, x=index: self.right_click(event, x))
                 
                 self.labels[index] = tk.Label(self.frames[index], text = "")
-                self.labels[index].grid(row=i, column=j, sticky='nswe')
+                self.labels[index].grid(row=i+1, column=j, sticky='nswe')
                 
                 self.labels[index].bind("<Button-1>", lambda event, x=index: self.reveal_square(event, x))
                 self.labels[index].bind("<Button-2>", lambda event, x=index: self.right_click(event, x))
@@ -108,7 +113,6 @@ class minesweeper():
                 self.revealed[index] = False
                 self.minePlacement[index] = False
                 self.invalidPlacement[index] = False
-
                 
     def set_bombs(self):
         # Sets the position of all of the bombs
@@ -166,7 +170,6 @@ class minesweeper():
             # Must remove flag before you can remove a square
             return
         if self.revealed[index]:
-            print('TESTING')
             return
         self.revealed[index] = True
         adjMines = self.get_adj_mines(index)
@@ -191,7 +194,14 @@ class minesweeper():
                 if not self.revealed[index]:
                     if not self.minePlacement[index]:
                         return 
-        print("You Won!")
+        self.stopwatch.stop()
+        elapsed = self.stopwatch.elapsed_time
+        minutes = int(elapsed // 60)
+        seconds = int(elapsed % 60)
+
+        time_str = f"{minutes:02d}:{seconds:02d}"
+        print("You Won in " + time_str + " minutes!")
+        time.sleep(5)
         quit()
         
     def first_click(self, index):
@@ -202,13 +212,62 @@ class minesweeper():
                 adjIndex = str(x+i) + str(y+j)
                 self.invalidPlacement[adjIndex] = True
         self.set_bombs()
+        self.stopwatch.start()
+        return
+    
+    def display_mines(self):
         for i in range(self.rows):
             for j in range(self.cols):
                 index = str(j) + str(i)
                 if self.minePlacement[index]:
                     # For testing only
                     self.labels[index]['text'] ='m' 
-        return
+        self.master.update_idletasks()
+
+class StopwatchApp:
+    def __init__(self, root):
+        self.root = root
+
+        self.is_running = False
+        self.start_time = 0
+        self.elapsed_time = 0
+
+        self.time_label = tk.Label(root, text="00:00.000", font=("Helvetica", 24))
+
+
+        self.time_label.pack(padx=20, pady=20)
+
+
+        self.update()
+
+    def start(self):
+        self.is_running = True
+        self.start_time = time.time()
     
+    def stop(self):
+        self.is_running = False
+        self.elapsed_time += time.time() - self.start_time
+
+    def reset(self):
+        self.is_running = False
+        self.elapsed_time = 0
+        self.update()
+
+    def update(self):
+        if self.is_running:
+            elapsed = self.elapsed_time + (time.time() - self.start_time)
+        else:
+            elapsed = self.elapsed_time
+
+        minutes = int(elapsed // 60)
+        seconds = int(elapsed % 60)
+        milliseconds = int((elapsed % 1) * 1000)
+
+        time_str = f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
+        self.time_label.config(text=time_str)
+        self.root.after(50, self.update)  # Update every 50 milliseconds
+
+
+
 # initaite the class that runs the games
-minesweeper()
+Minesweeper()
