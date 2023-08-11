@@ -4,3 +4,4 @@ Ability to change size of map
 
 Ability to restart duing game and after loss
 
+More Visually Pleasing

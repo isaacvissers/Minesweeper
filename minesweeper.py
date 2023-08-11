@@ -1,6 +1,7 @@
 import tkinter as tk
 import random
 import time
+from PIL import Image, ImageTk
 
 
 class Minesweeper():
@@ -17,6 +18,11 @@ class Minesweeper():
         self.revealed = {}
         self.minePlacement = {}
         self.invalidPlacement = {}
+        
+        
+        self.flagImage = Image.open('flag.png')
+        self.flagImage = self.flagImage.resize((15, 15))
+        self.flagImage = ImageTk.PhotoImage(self.flagImage)
         
         # Initialize the size and general properties
         self.firstClick = True
@@ -55,6 +61,9 @@ class Minesweeper():
             return
         # Reveal square
         self.revealed[index] = True
+        self.labels[index].configure(background="#A9A9A9")
+        self.frames[index].configure(bg='#A9A9A9')
+        print('hello')
         adjMines = self.get_adj_mines(index)
         self.labels[index].configure(text=adjMines)
         
@@ -81,7 +90,9 @@ class Minesweeper():
     def place_flag(self, index):
         # Toggles flag for undiscovered square
         if not self.flag[index]:
-            self.labels[index].configure(text='F')
+            self.labels[index].configure(image=self.flagImage)
+            self.frames[index].configure(bg='#A9A9A9')
+            self.labels[index].configure(bg='#A9A9A9')
             self.flag[index] = True
         else:
             self.labels[index].configure(text='')
@@ -95,16 +106,16 @@ class Minesweeper():
             for j in range(self.cols):
                 index = str(j) + str(i)
                 
-                self.frames[index] = tk.Frame(self.master, width=30, height=30, borderwidth=5, relief="raised")
+                self.frames[index] = tk.Frame(self.master, width=30, height=30, borderwidth=5, relief="raised", background="#36454F")
                 self.frames[index].grid_propagate(False)
                 self.frames[index].grid(row=i+1, column=j)
                 self.frames[index].bind("<Button-1>", lambda event, x=index: self.reveal_square(event, x))
                 self.frames[index].bind("<Button-2>", lambda event, x=index: self.right_click(event, x))
                 self.frames[index].bind("<Button-3>", lambda event, x=index: self.right_click(event, x))
                 
-                self.labels[index] = tk.Label(self.frames[index], text = "")
+                self.labels[index] = tk.Label(self.frames[index], text = "", background="#36454F")
                 self.labels[index].grid(row=i+1, column=j, sticky='nswe')
-                
+
                 self.labels[index].bind("<Button-1>", lambda event, x=index: self.reveal_square(event, x))
                 self.labels[index].bind("<Button-2>", lambda event, x=index: self.right_click(event, x))
                 self.labels[index].bind("<Button-3>", lambda event, x=index: self.right_click(event, x))                
@@ -171,6 +182,8 @@ class Minesweeper():
             return
         if self.revealed[index]:
             return
+        self.labels[index].configure(background="#A9A9A9")
+        self.frames[index].configure(bg='#A9A9A9')
         self.revealed[index] = True
         adjMines = self.get_adj_mines(index)
         self.labels[index].configure(text=adjMines)
