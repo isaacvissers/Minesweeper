@@ -1,7 +1,11 @@
 I want to add high score function 
 
-Ability to change size of map
+Ability to change size of map -  difficulty
 
 Ability to restart duing game and after loss
 
 More Visually Pleasing
+
+Add mine image
+
+need to fix index system once coords have 2 digits

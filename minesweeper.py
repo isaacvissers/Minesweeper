@@ -2,6 +2,7 @@ import tkinter as tk
 import random
 import time
 from PIL import Image, ImageTk
+from tkinter import ttk
 
 
 class Minesweeper():
@@ -21,17 +22,14 @@ class Minesweeper():
         
         
         self.flagImage = Image.open('flag.png')
-        self.flagImage = self.flagImage.resize((15, 15))
+        self.flagImage = self.flagImage.resize((23, 23))
         self.flagImage = ImageTk.PhotoImage(self.flagImage)
+
         
         # Initialize the size and general properties
         self.firstClick = True
-        self.cols = 9
-        self.rows = 9
-        self.mines = 10
-        self.remainingMines = 10
         
-        self.create_board()
+        self.create_menu()
         self.master.mainloop()
         
     def reveal_square(self, event, index):
@@ -48,63 +46,61 @@ class Minesweeper():
             
         if self.minePlacement[index]:
             # Revealed a mine
+            self.labels[index].configure(bg='red')
+            self.frames[index].configure(bg='red')
             print("You Lose")
             self.display_mines()
             time.sleep(5)
             quit()
 
-        if self.revealed[index]:
-            # Reveals adjacent for correct number of adjacent flags - THIS CODE DOESNT CURRENTLY WORK
-            if self.get_adj_flags(index) == self.get_adj_mines(index):
-                self.reveal_adjacent(index)
-            self.complete_check()
-            return
         # Reveal square
         self.revealed[index] = True
         self.labels[index].configure(background="#A9A9A9")
-        self.frames[index].configure(bg='#A9A9A9')
-        print('hello')
+        self.frames[index].configure(bg='#A9A9A9', borderwidth=1)
         adjMines = self.get_adj_mines(index)
-        self.labels[index].configure(text=adjMines)
-        
+        if adjMines != 0:
+            self.labels[index].configure(text=adjMines)
+
         if adjMines == 0:
             x = int(index[0]) - 1
             y = int(index[1]) - 1
             for i in range(3):
                 for j in range (3):
-                    adjIndex = str(x+i) + str(y+j)
+                    adjIndex = (x+i, y+j)
                     if (0 <= x+i < self.cols) and (0 <= y+j < self.rows):
                         self.reveal_adjacent(adjIndex)
         else:
             self.complete_check()
             return
         
-    def right_click(self, event, x):
+    def right_click(self, event, index):
         # Place flag
-        if not self.revealed[x]:
+        if not self.revealed[index]:
             # Makes sure flag isnt on already revealed square
-            self.place_flag(x)
+            self.place_flag(index)
             self.remainingMines -= 1
             self.complete_check()
 
     def place_flag(self, index):
         # Toggles flag for undiscovered square
         if not self.flag[index]:
+            self.frames[index].configure(borderwidth=1)
             self.labels[index].configure(image=self.flagImage)
             self.frames[index].configure(bg='#A9A9A9')
             self.labels[index].configure(bg='#A9A9A9')
             self.flag[index] = True
         else:
-            self.labels[index].configure(text='')
+            self.labels[index].configure(image='')
+            self.frames[index].configure(borderwidth=5)
+            self.frames[index].configure(bg='#36454F')
+            self.labels[index].configure(bg='#36454F')
             self.flag[index] = False
     
     def create_board(self):
-        self.stopwatchFrame = tk.Frame(self.master)
-        self.stopwatchFrame.grid(row=0, column=0, columnspan=10)
-        self.stopwatch = StopwatchApp(self.stopwatchFrame)
+        self.get_size()  
         for i in range(self.rows):
             for j in range(self.cols):
-                index = str(j) + str(i)
+                index = (j, i)
                 
                 self.frames[index] = tk.Frame(self.master, width=30, height=30, borderwidth=5, relief="raised", background="#36454F")
                 self.frames[index].grid_propagate(False)
@@ -114,7 +110,9 @@ class Minesweeper():
                 self.frames[index].bind("<Button-3>", lambda event, x=index: self.right_click(event, x))
                 
                 self.labels[index] = tk.Label(self.frames[index], text = "", background="#36454F")
-                self.labels[index].grid(row=i+1, column=j, sticky='nswe')
+                # self.labels[index].grid(row=i+1, column=j, sticky='nswe')
+                self.labels[index].grid(row=0, column=0)
+
 
                 self.labels[index].bind("<Button-1>", lambda event, x=index: self.reveal_square(event, x))
                 self.labels[index].bind("<Button-2>", lambda event, x=index: self.right_click(event, x))
@@ -140,7 +138,7 @@ class Minesweeper():
         # return a random valid coordinate
         x = random.randint(0,self.cols-1)
         y  = random.randint(0, self.rows-1)
-        index = str(x) + str(y)
+        index = (x, y)
         return(index)
         
     def get_adj_mines(self, index):
@@ -151,7 +149,7 @@ class Minesweeper():
         y = int(index[1]) - 1
         for i in range(3):
             for j in range (3):
-                adjIndex = str(x+i) + str(y+j)
+                adjIndex = (x+i, y+j)
                 try:
                     if self.minePlacement[adjIndex]:
                         adjMines += 1
@@ -167,7 +165,7 @@ class Minesweeper():
         y = int(index[1]) - 1
         for i in range(3):
             for j in range (3):
-                adjIndex = str(x+i) + str(y+j)
+                adjIndex = (x+i, y+j)
                 try:
                     if self.flag[adjIndex]:
                         adjMines += 1
@@ -183,16 +181,17 @@ class Minesweeper():
         if self.revealed[index]:
             return
         self.labels[index].configure(background="#A9A9A9")
-        self.frames[index].configure(bg='#A9A9A9')
+        self.frames[index].configure(bg='#A9A9A9', borderwidth=1)
         self.revealed[index] = True
         adjMines = self.get_adj_mines(index)
-        self.labels[index].configure(text=adjMines)
+        if adjMines != 0:
+            self.labels[index].configure(text=adjMines)
         if adjMines == 0:
             x = int(index[0]) - 1
             y = int(index[1]) - 1
             for i in range(3):
                 for j in range (3):
-                    adjIndex = str(x+i) + str(y+j)
+                    adjIndex = (x+i, y+j)
                     if (0 <= x+i < self.cols) and (0 <= y+j < self.rows):
                         # Reveals adjacent squares within boundaries of the board
                         self.reveal_adjacent(adjIndex)
@@ -203,7 +202,7 @@ class Minesweeper():
     def complete_check(self):
         for i in range(self.rows):
             for j in range(self.cols):
-                index = str(j) + str(i)
+                index = (j, i)
                 if not self.revealed[index]:
                     if not self.minePlacement[index]:
                         return 
@@ -222,7 +221,7 @@ class Minesweeper():
         y = int(index[1]) - 1
         for i in range(3):
             for j in range (3):
-                adjIndex = str(x+i) + str(y+j)
+                adjIndex = (x+i, y+j)
                 self.invalidPlacement[adjIndex] = True
         self.set_bombs()
         self.stopwatch.start()
@@ -231,12 +230,57 @@ class Minesweeper():
     def display_mines(self):
         for i in range(self.rows):
             for j in range(self.cols):
-                index = str(j) + str(i)
+                index = (j, i)
                 if self.minePlacement[index]:
                     # For testing only
                     self.labels[index]['text'] ='m' 
         self.master.update_idletasks()
 
+    def create_menu(self):
+        self.menuFrame = tk.Frame(self.master)
+        self.menuFrame.grid(row=0, column=0, columnspan=100)
+        
+        # Create stopwatch widget
+        self.stopwatchFrame = tk.Frame(self.menuFrame)
+        self.stopwatchFrame.grid(row=0, column=0)
+        self.stopwatch = StopwatchApp(self.stopwatchFrame)
+        
+        # Create reset button and difficulty selector
+        self.resetButton = tk.Button(self.menuFrame, text='Start', font="Helvetica 12", command=self.create_board)
+        self.resetButton.grid(row=0, column=1, columnspan=5, pady=5)
+        
+        self.difficultyFrame = tk.Frame(self.menuFrame)
+        self.difficultyFrame.grid(row=0, column=8, columnspan=3)
+
+
+        self.difficulty = tk.StringVar()
+        self.difficulties = ['Easy', 'Medium', 'Hard', 'Very Hard']
+        self.difficultyBox = ttk.Combobox(self.difficultyFrame, textvariable=self.difficulty)
+        self.difficultyBox.grid(row=0, column=2, pady=10, sticky='nsew')
+        self.difficultyBox.config(values = self.difficulties)
+        self.difficultyBox.set('Easy')
+            
+    def get_size(self):
+        if self.difficulty.get() == 'Easy':
+            self.rows = 9
+            self.cols = 9
+            self.mines = 10
+            self.remainingMines = 10
+        elif self.difficulty.get() == 'Medium':
+            self.rows = 16
+            self.cols = 16
+            self.mines = 40
+            self.remainingMines = 40
+        elif self.difficulty.get() == 'Hard':
+            self.rows = 16
+            self.cols = 30
+            self.mines = 99
+            self.remainingMines = 99
+        elif self.difficulty.get() == 'Very Hard':
+            self.rows = 30
+            self.cols = 24
+            self.mines = 160
+            self.remainingMines = 160
 class StopwatchApp:
     def __init__(self, root):
         self.root = root
@@ -245,10 +289,10 @@ class StopwatchApp:
         self.start_time = 0
         self.elapsed_time = 0
 
-        self.time_label = tk.Label(root, text="00:00.000", font=("Helvetica", 24))
+        self.time_label = tk.Label(root, text="00:00", font=("Helvetica", 16))
 
 
-        self.time_label.pack(padx=20, pady=20)
+        self.time_label.pack(pady=5)
 
 
         self.update()
@@ -274,9 +318,8 @@ class StopwatchApp:
 
         minutes = int(elapsed // 60)
         seconds = int(elapsed % 60)
-        milliseconds = int((elapsed % 1) * 1000)
 
-        time_str = f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
+        time_str = f"{minutes:02d}:{seconds:02d}"
         self.time_label.config(text=time_str)
         self.root.after(50, self.update)  # Update every 50 milliseconds
 
