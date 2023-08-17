@@ -25,6 +25,9 @@ class Minesweeper():
         self.flagImage = self.flagImage.resize((23, 23))
         self.flagImage = ImageTk.PhotoImage(self.flagImage)
 
+        self.mineImage = Image.open('mine.png')
+        self.mineImage = self.mineImage.resize((23, 23))
+        self.mineImage = ImageTk.PhotoImage(self.mineImage)
         
         # Initialize the size and general properties
         self.firstClick = True
@@ -60,7 +63,7 @@ class Minesweeper():
         adjMines = self.get_adj_mines(index)
         if adjMines != 0:
             self.labels[index].configure(text=adjMines)
-
+        self.master.update()
         if adjMines == 0:
             x = int(index[0]) - 1
             y = int(index[1]) - 1
@@ -211,6 +214,9 @@ class Minesweeper():
         minutes = int(elapsed // 60)
         seconds = int(elapsed % 60)
 
+        self.labels[index].configure(background="#A9A9A9")
+        self.frames[index].configure(bg='#A9A9A9', borderwidth=1)
+
         time_str = f"{minutes:02d}:{seconds:02d}"
         print("You Won in " + time_str + " minutes!")
         time.sleep(5)
@@ -233,12 +239,16 @@ class Minesweeper():
                 index = (j, i)
                 if self.minePlacement[index]:
                     # For testing only
-                    self.labels[index]['text'] ='m' 
+                    self.frames[index].configure(borderwidth=1)
+                    self.labels[index].configure(image=self.mineImage)
+                    self.frames[index].configure(bg='#A9A9A9')
+                    self.labels[index].configure(bg='#A9A9A9')
+                    self.flag[index] = True
         self.master.update_idletasks()
 
     def create_menu(self):
         self.menuFrame = tk.Frame(self.master)
-        self.menuFrame.grid(row=0, column=0, columnspan=100)
+        self.menuFrame.grid(row=0, column=0, columnspan=100, padx=10)
         
         # Create stopwatch widget
         self.stopwatchFrame = tk.Frame(self.menuFrame)
@@ -247,7 +257,7 @@ class Minesweeper():
         
         # Create reset button and difficulty selector
         self.resetButton = tk.Button(self.menuFrame, text='Start', font="Helvetica 12", command=self.create_board)
-        self.resetButton.grid(row=0, column=1, columnspan=5, pady=5)
+        self.resetButton.grid(row=0, column=1, columnspan=5, pady=5, padx=10)
         
         self.difficultyFrame = tk.Frame(self.menuFrame)
         self.difficultyFrame.grid(row=0, column=8, columnspan=3)
@@ -255,8 +265,8 @@ class Minesweeper():
 
         self.difficulty = tk.StringVar()
         self.difficulties = ['Easy', 'Medium', 'Hard', 'Very Hard']
-        self.difficultyBox = ttk.Combobox(self.difficultyFrame, textvariable=self.difficulty)
-        self.difficultyBox.grid(row=0, column=2, pady=10, sticky='nsew')
+        self.difficultyBox = ttk.Combobox(self.difficultyFrame, textvariable=self.difficulty, width=10)
+        self.difficultyBox.grid(row=0, column=2, pady=10, sticky='nsew', padx=10)
         self.difficultyBox.config(values = self.difficulties)
         self.difficultyBox.set('Easy')
             
@@ -327,3 +337,7 @@ class StopwatchApp:
 
 # initaite the class that runs the games
 Minesweeper()
+
+
+
+# Reset Button Doesn't Work. It only works for resetting the tables.
