@@ -1,3 +1,4 @@
+# Import necessary packages
 import tkinter as tk
 import random
 import time
@@ -6,55 +7,49 @@ from tkinter import ttk
 
 
 class Minesweeper():
+# The class for the game board
     def __init__(self):
         # Initialize the tkinter GUI
         self.master = tk.Tk()
         self.master.title("Minesweeper")
         self.master.resizable(False, False)
+        self.boardFrame = tk.Frame(self.master)
+        self.boardFrame.grid(row=1, column=0)
         
-        # dictionaries used to store data at each square
-        self.frames = {}
-        self.flag = {}
-        self.labels = {}
-        self.revealed = {}
-        self.minePlacement = {}
-        self.invalidPlacement = {}
-        
-        
+        # Create necessary images
         self.flagImage = Image.open('flag.png')
-        self.flagImage = self.flagImage.resize((23, 23))
-        self.flagImage = ImageTk.PhotoImage(self.flagImage)
-
         self.mineImage = Image.open('mine.png')
+        self.flagImage = self.flagImage.resize((23, 23))
         self.mineImage = self.mineImage.resize((23, 23))
+        self.flagImage = ImageTk.PhotoImage(self.flagImage)
         self.mineImage = ImageTk.PhotoImage(self.mineImage)
         
-        # Initialize the size and general properties
-        self.firstClick = True
-        
+        # Initialize the GUI
         self.create_menu()
         self.master.mainloop()
         
     def reveal_square(self, event, index):
-        # Reveal the square "index"
+        # Reveal the square at index
         if self.flag[index]:
             # Must remove flag before you can reveal a square
-            self.complete_check()
             return
         
         if self.firstClick:
-            # if this is the first click we must place the mines, and no mines can be adjacent to the click
+            # No mines can be adjacent
             self.firstClick = False
             self.first_click(index)
             
         if self.minePlacement[index]:
-            # Revealed a mine
-            self.labels[index].configure(bg='red')
-            self.frames[index].configure(bg='red')
+            # Clicked a mine
+            self.stopwatch.stop()
             print("You Lose")
             self.display_mines()
+            self.labels[index].configure(bg='red')
+            self.frames[index].configure(bg='red')
+            self.master.update()
             time.sleep(5)
-            quit()
+            self.reset()
+            return
 
         # Reveal square
         self.revealed[index] = True
@@ -100,12 +95,16 @@ class Minesweeper():
             self.flag[index] = False
     
     def create_board(self):
-        self.get_size()  
+        # Reconfigure board area
+        self.resetButton.configure(text='Reset')
+        self.reset()
+        self.get_size() 
+        
+        # Create board 
         for i in range(self.rows):
             for j in range(self.cols):
-                index = (j, i)
-                
-                self.frames[index] = tk.Frame(self.master, width=30, height=30, borderwidth=5, relief="raised", background="#36454F")
+                index = (j, i)   
+                self.frames[index] = tk.Frame(self.boardFrame, width=30, height=30, borderwidth=5, relief="raised", background="#36454F")
                 self.frames[index].grid_propagate(False)
                 self.frames[index].grid(row=i+1, column=j)
                 self.frames[index].bind("<Button-1>", lambda event, x=index: self.reveal_square(event, x))
@@ -113,14 +112,13 @@ class Minesweeper():
                 self.frames[index].bind("<Button-3>", lambda event, x=index: self.right_click(event, x))
                 
                 self.labels[index] = tk.Label(self.frames[index], text = "", background="#36454F")
-                # self.labels[index].grid(row=i+1, column=j, sticky='nswe')
                 self.labels[index].grid(row=0, column=0)
-
 
                 self.labels[index].bind("<Button-1>", lambda event, x=index: self.reveal_square(event, x))
                 self.labels[index].bind("<Button-2>", lambda event, x=index: self.right_click(event, x))
                 self.labels[index].bind("<Button-3>", lambda event, x=index: self.right_click(event, x))                
                 
+                # Set properties for each square
                 self.flag[index] = False
                 self.revealed[index] = False
                 self.minePlacement[index] = False
@@ -160,36 +158,24 @@ class Minesweeper():
                     pass
         return(adjMines)
     
-    def get_adj_flags(self, index):
-        # returns the number of mines adjacent (including diagonal) to the clicked square
-        # assumes this square is not a mine
-        adjMines = 0
-        x = int(index[0]) - 1
-        y = int(index[1]) - 1
-        for i in range(3):
-            for j in range (3):
-                adjIndex = (x+i, y+j)
-                try:
-                    if self.flag[adjIndex]:
-                        adjMines += 1
-                except KeyError:
-                    pass
-        return(adjMines)
-    
     def reveal_adjacent(self, index):
-        # Reveal
         if self.flag[index] or self.minePlacement[index]:
-            # Must remove flag before you can remove a square
+            # Shouldnt be revealing
             return
-        if self.revealed[index]:
+        if self.revealed[index]: 
+            # Already Revealed
             return
+        # Reveal square
         self.labels[index].configure(background="#A9A9A9")
         self.frames[index].configure(bg='#A9A9A9', borderwidth=1)
         self.revealed[index] = True
         adjMines = self.get_adj_mines(index)
         if adjMines != 0:
+            # Stop growing revealed area
             self.labels[index].configure(text=adjMines)
-        if adjMines == 0:
+            return
+        else:
+            # Recursivly call for each adjacent share
             x = int(index[0]) - 1
             y = int(index[1]) - 1
             for i in range(3):
@@ -198,31 +184,29 @@ class Minesweeper():
                     if (0 <= x+i < self.cols) and (0 <= y+j < self.rows):
                         # Reveals adjacent squares within boundaries of the board
                         self.reveal_adjacent(adjIndex)
-        else:
-            # if there is an adjacent mine, no need to keep revealing
-            return
-    
+
     def complete_check(self):
+        # check if every square is either a flag or revelead
         for i in range(self.rows):
             for j in range(self.cols):
                 index = (j, i)
                 if not self.revealed[index]:
                     if not self.minePlacement[index]:
                         return 
+        # Game is complete
         self.stopwatch.stop()
         elapsed = self.stopwatch.elapsed_time
         minutes = int(elapsed // 60)
         seconds = int(elapsed % 60)
+        time_str = f"{minutes:02d}:{seconds:02d}"
+        print("You Won in " + time_str + " minutes!")
 
         self.labels[index].configure(background="#A9A9A9")
         self.frames[index].configure(bg='#A9A9A9', borderwidth=1)
-
-        time_str = f"{minutes:02d}:{seconds:02d}"
-        print("You Won in " + time_str + " minutes!")
         time.sleep(5)
-        quit()
         
     def first_click(self, index):
+        # Set bombs so that none are adjacent and reveal this square
         x = int(index[0]) - 1
         y = int(index[1]) - 1
         for i in range(3):
@@ -234,19 +218,20 @@ class Minesweeper():
         return
     
     def display_mines(self):
+        # Display all of the mines
         for i in range(self.rows):
             for j in range(self.cols):
                 index = (j, i)
                 if self.minePlacement[index]:
-                    # For testing only
                     self.frames[index].configure(borderwidth=1)
                     self.labels[index].configure(image=self.mineImage)
                     self.frames[index].configure(bg='#A9A9A9')
                     self.labels[index].configure(bg='#A9A9A9')
                     self.flag[index] = True
-        self.master.update_idletasks()
+        self.master.update()
 
     def create_menu(self):
+        # Set up frame
         self.menuFrame = tk.Frame(self.master)
         self.menuFrame.grid(row=0, column=0, columnspan=100, padx=10)
         
@@ -261,8 +246,6 @@ class Minesweeper():
         
         self.difficultyFrame = tk.Frame(self.menuFrame)
         self.difficultyFrame.grid(row=0, column=8, columnspan=3)
-
-
         self.difficulty = tk.StringVar()
         self.difficulties = ['Easy', 'Medium', 'Hard', 'Very Hard']
         self.difficultyBox = ttk.Combobox(self.difficultyFrame, textvariable=self.difficulty, width=10)
@@ -271,6 +254,7 @@ class Minesweeper():
         self.difficultyBox.set('Easy')
             
     def get_size(self):
+        # Uses the difficulty setting and returns the correct size
         if self.difficulty.get() == 'Easy':
             self.rows = 9
             self.cols = 9
@@ -291,36 +275,55 @@ class Minesweeper():
             self.cols = 24
             self.mines = 160
             self.remainingMines = 160
+            
+    def reset(self):
+        # resets the board and all attributes
+        self.boardFrame.destroy()
+        self.boardFrame = tk.Frame(self.master)
+        self.boardFrame.grid(row=1, column=0)  
+        self.firstClick = True    
+        self.frames = {}
+        self.flag = {}
+        self.labels = {}
+        self.revealed = {}
+        self.minePlacement = {}
+        self.invalidPlacement = {}
+        
+        # Reset stopwatch
+        self.stopwatch.is_running = False
+        self.stopwatch.start_time = 0
+        self.stopwatch.elapsed_time = 0
+        self.stopwatch.time_label.configure(text="00:00")
+      
 class StopwatchApp:
     def __init__(self, root):
+        # Set up stopwatch widget
         self.root = root
-
         self.is_running = False
         self.start_time = 0
         self.elapsed_time = 0
-
         self.time_label = tk.Label(root, text="00:00", font=("Helvetica", 16))
-
-
         self.time_label.pack(pady=5)
-
-
         self.update()
 
     def start(self):
+        # Start the stopwatch
         self.is_running = True
         self.start_time = time.time()
     
     def stop(self):
+        # Stop the stopwatch
         self.is_running = False
         self.elapsed_time += time.time() - self.start_time
 
     def reset(self):
+        # reset the stopwatch
         self.is_running = False
         self.elapsed_time = 0
         self.update()
 
     def update(self):
+        # Update the visual stopwatch
         if self.is_running:
             elapsed = self.elapsed_time + (time.time() - self.start_time)
         else:
@@ -332,12 +335,6 @@ class StopwatchApp:
         time_str = f"{minutes:02d}:{seconds:02d}"
         self.time_label.config(text=time_str)
         self.root.after(50, self.update)  # Update every 50 milliseconds
-
-
-
+s
 # initaite the class that runs the games
 Minesweeper()
-
-
-
-# Reset Button Doesn't Work. It only works for resetting the tables.

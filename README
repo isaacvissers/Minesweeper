@@ -1,0 +1,10 @@
+Project: Minesweeper - Game
+Date" August 17th, 2023"
+Credit: Isaac Vissers
+
+Please note the photos flag.png and mine.png were taken from google. I do not own these images or indend to distribute them
+    https://play.google.com/store/apps/details?id=com.avdprog.minesweeper&hl=en_US
+    https://commons.wikimedia.org/wiki/File:Minesweeper_flag.svg
+
+Running Instructions:
+    Run python3 minesweeper.py from this directory
