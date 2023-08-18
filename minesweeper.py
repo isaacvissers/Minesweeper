@@ -335,6 +335,6 @@ class StopwatchApp:
         time_str = f"{minutes:02d}:{seconds:02d}"
         self.time_label.config(text=time_str)
         self.root.after(50, self.update)  # Update every 50 milliseconds
-s
+
 # initaite the class that runs the games
 Minesweeper()
