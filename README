@@ -6,5 +6,9 @@ Please note the photos flag.png and mine.png were taken from google. I do not ow
     https://play.google.com/store/apps/details?id=com.avdprog.minesweeper&hl=en_US
     https://commons.wikimedia.org/wiki/File:Minesweeper_flag.svg
 
+Description: 
+    Minesweeper game. Please select the difficulty and click 'Start' to play. a right click will reveal an unrevealed square, and a left click will place a flag
+    to mark a bomb. The numbers represent the number of adjacent bombs. The goal is to reveal the entire map without revealing any bombs. Good Luck!
+
 Running Instructions:
     Run python3 minesweeper.py from this directory
